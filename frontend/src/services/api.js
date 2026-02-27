@@ -1,9 +1,7 @@
 /**
  * API service — communicates with backend.
  */
-
-const API_BASE = import.meta.env.VITE_API_URL || '';
-
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 /**
  * Send audio blob to /analyze endpoint.
  * @param {Blob} audioBlob
