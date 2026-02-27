@@ -1,0 +1,55 @@
+# === Python ===
+venv/
+.venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+*.egg
+
+# === Node.js ===
+node_modules/
+npm-debug.log*
+
+# === AI Models (large files) ===
+ai-service/model/*.pkl
+ai-service/model/*.onnx
+ai-service/model/*.pt
+ai-service/model/*.h5
+ai-service/model/*.mp4
+
+# === Environment & Secrets ===
+.env
+.env.local
+.env.production
+
+# === IDE ===
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# === OS ===
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# === Build ===
+frontend/dist/
+frontend/build/
+
+# === Datasets (large files) ===
+datasets/
+
+# === HuggingFace cache ===
+.cache/
+*.cache
+
+# === Jupyter ===
+.ipynb_checkpoints/
+
+# === Logs ===
+*.log
