@@ -1,0 +1,24 @@
+{
+    "buildCommand": "cd frontend && npm install && npm run build",
+    "outputDirectory": "frontend/dist",
+    "installCommand": "cd frontend && npm install",
+    "framework": "vite",
+    "rewrites": [
+        {
+            "source": "/analyze",
+            "destination": "http://localhost:3001/analyze"
+        },
+        {
+            "source": "/liveness",
+            "destination": "http://localhost:3001/liveness"
+        },
+        {
+            "source": "/health",
+            "destination": "http://localhost:3001/health"
+        },
+        {
+            "source": "/(.*)",
+            "destination": "/"
+        }
+    ]
+}
