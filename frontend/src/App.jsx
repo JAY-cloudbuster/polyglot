@@ -1,24 +1,26 @@
-import Home from './pages/Home'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import Navbar from './components/Navbar'
+import RhythmBackground from './components/RhythmBackground'
+import Landing from './pages/Landing'
+import RecordPage from './pages/RecordPage'
+import UploadPage from './pages/UploadPage'
 
 function App() {
     return (
-        <div className="app">
-            <header className="header">
-                <div className="header__brand">
-                    <img src="/ghost.svg" alt="Polyglot Ghost" className="header__icon" />
-                    <span className="header__title">Polyglot Ghost</span>
-                </div>
-                <span className="header__badge">v1.0 — Acoustic AI</span>
-            </header>
-
-            <main className="main">
-                <Home />
-            </main>
-
-            <footer className="footer">
-                Polyglot Ghost &copy; {new Date().getFullYear()} — Voice Deepfake Detection
-            </footer>
-        </div>
+        <BrowserRouter>
+            <RhythmBackground />
+            <div style={{ position: 'relative', zIndex: 1 }}>
+                <Navbar />
+                <Routes>
+                    <Route path="/" element={<Landing />} />
+                    <Route path="/record" element={<RecordPage />} />
+                    <Route path="/upload" element={<UploadPage />} />
+                </Routes>
+                <footer className="footer">
+                    Polyglot Ghost &copy; {new Date().getFullYear()}
+                </footer>
+            </div>
+        </BrowserRouter>
     )
 }
 
