@@ -39,7 +39,7 @@ graph TD
     end
 
     %% External APIs
-    FeatherlessAPI[Featherless AI LLM (Llama 3.1 8B)]:::external
+    GroqAPI[Groq LLM - Llama 3 8B]:::external
 
     %% Data Flow
     User -->|Accesses globally| ReactUI
@@ -52,9 +52,9 @@ graph TD
     FastAPI --> Librosa
     Librosa -->|16kHz Mono sine waves| PyTorch
     PyTorch -->|Extracts Tensors| Bayesian
-    Bayesian -->|Sends Acoustic Anomalies| FeatherlessAPI
+    Bayesian -->|Sends Acoustic Anomalies| GroqAPI
     
-    FeatherlessAPI -->|Returns Forensic Reasoning| Bayesian
+    GroqAPI -->|Returns Forensic Reasoning| Bayesian
     Bayesian -->|Returns JSON Results| ExpressAPI
     ExpressAPI -->|Returns Verdict| ReactUI
     ReactUI -->|Generates Evidence| ReportGen
@@ -89,8 +89,8 @@ The architecture is divided into three distinct layers to ensure scalability, se
   3. **Classification:** Uses Bayesian Gaussian probability distributions to score the likelihood of the audio being real vs. simulated.
 
 ### D. Explainable AI (External LLM)
-- **Technology:** Featherless AI API (Llama 3.1 8B Instruct).
-- **Role:** Once the Python engine generates the mathematical probabilities and anomaly metrics, it POSTs them to Featherless AI. The LLM translates the complex acoustic math into a human-readable forensic paragraph explaining *why* the fake was detected.
+- **Technology:** Groq API (Llama 3 8B via LPU inference).
+- **Role:** Once the Python engine generates the mathematical probabilities and anomaly metrics, it POSTs them to Groq. The LLM translates the complex acoustic math into a human-readable forensic paragraph explaining *why* the fake was detected.
 
 ## 3. Privacy-by-Design
 This architecture implements **Stateless Execution**. 

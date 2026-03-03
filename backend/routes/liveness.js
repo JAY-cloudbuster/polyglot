@@ -14,16 +14,16 @@ router.post("/", async (req, res, next) => {
             return res.status(400).json({ error: "Missing 'text' field" });
         }
 
-        const featherlessUrl = process.env.FEATHERLESS_API_URL;
-        const featherlessKey = process.env.FEATHERLESS_API_KEY;
+        const groqUrl = process.env.GROQ_API_URL || "https://api.groq.com/openai/v1/chat/completions";
+        const groqKey = process.env.GROQ_API_KEY;
 
-        // If Featherless AI is configured, use it for semantic analysis
-        if (featherlessUrl && featherlessKey) {
+        // If Groq AI is configured, use it for semantic analysis
+        if (groqUrl && groqKey) {
             try {
                 const response = await axios.post(
-                    featherlessUrl,
+                    groqUrl,
                     {
-                        model: process.env.FEATHERLESS_MODEL || "meta-llama/Meta-Llama-3.1-8B-Instruct",
+                        model: process.env.GROQ_MODEL || "llama3-8b-8192",
                         messages: [
                             {
                                 role: "system",
@@ -32,7 +32,7 @@ router.post("/", async (req, res, next) => {
                             },
                             {
                                 role: "user",
-                                content: `Prompt given to user: "${prompt || "Please say your name and today's date."}"\nUser's spoken response: "${text}"\n\nEvaluate the semantic relevance.`,
+                                content: `Prompt given to user: "${prompt || "Please say your name and today's date."}"\\nUser's spoken response: "${text}"\\n\\nEvaluate the semantic relevance.`,
                             },
                         ],
                         max_tokens: 200,
@@ -40,7 +40,7 @@ router.post("/", async (req, res, next) => {
                     },
                     {
                         headers: {
-                            Authorization: `Bearer ${featherlessKey}`,
+                            Authorization: `Bearer ${groqKey}`,
                             "Content-Type": "application/json",
                         },
                         timeout: 15000,
@@ -53,19 +53,19 @@ router.post("/", async (req, res, next) => {
                 try {
                     const parsed = JSON.parse(aiContent);
                     return res.json({
-                        source: "featherless_ai",
+                        source: "groq_ai",
                         ...parsed,
                     });
                 } catch {
                     return res.json({
-                        source: "featherless_ai",
+                        source: "groq_ai",
                         relevance_score: 0.5,
                         is_live: true,
                         reasoning: aiContent,
                     });
                 }
             } catch (aiError) {
-                console.warn("[LIVENESS] Featherless AI call failed, falling back:", aiError.message);
+                console.warn("[LIVENESS] Groq AI call failed, falling back:", aiError.message);
             }
         }
 

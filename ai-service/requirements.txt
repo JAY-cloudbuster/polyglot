@@ -8,3 +8,8 @@ python-multipart==0.0.6
 soundfile==0.12.1
 xgboost==2.0.3
 pydub==0.25.1
+python-dotenv==1.0.0
+torch
+transformers
+requests
+scipy

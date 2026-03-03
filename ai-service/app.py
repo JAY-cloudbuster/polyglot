@@ -4,6 +4,9 @@ Exposes /predict endpoint for audio deepfake detection.
 """
 
 import logging
+from dotenv import load_dotenv
+load_dotenv()  # Load .env before importing inference (which reads GROQ_API_KEY)
+
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware

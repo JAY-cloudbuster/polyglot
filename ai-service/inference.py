@@ -7,7 +7,7 @@ and processes raw waveforms — no manual feature engineering needed.
 
 Architecture:
   1. wav2vec2 deep learning model → REAL/FAKE (99% of the work)
-  2. Featherless LLM → human-readable explanation
+  2. Groq LLM (Llama 3) → human-readable explanation
 """
 
 import os
@@ -29,18 +29,18 @@ _model = None
 _extractor = None
 _model_sr = 16000
 
-# Featherless (explanation only)
-FEATHERLESS_API_URL = os.environ.get(
-    "FEATHERLESS_API_URL",
-    "https://api.featherless.ai/v1/chat/completions"
+# Groq LLM (explanation only — replaces Featherless AI)
+GROQ_API_URL = os.environ.get(
+    "GROQ_API_URL",
+    "https://api.groq.com/openai/v1/chat/completions"
 )
-FEATHERLESS_API_KEY = os.environ.get(
-    "FEATHERLESS_API_KEY",
-    "rc_de0493447d51123bf5b5f761807dbdc9edca1c2fdc2cd4bcc0a4301083c70d86"
+GROQ_API_KEY = os.environ.get(
+    "GROQ_API_KEY",
+    ""
 )
-FEATHERLESS_MODEL = os.environ.get(
-    "FEATHERLESS_MODEL",
-    "meta-llama/Meta-Llama-3.1-8B-Instruct"
+GROQ_MODEL = os.environ.get(
+    "GROQ_MODEL",
+    "llama3-8b-8192"
 )
 
 
@@ -61,7 +61,7 @@ def load_model():
     logger.info(f"  Model: {HF_MODEL_NAME}")
     logger.info(f"  Labels: {_model.config.id2label}")
     logger.info(f"  Sampling rate: {_model_sr}")
-    logger.info(f"  Featherless: explanation only")
+    logger.info(f"  Groq LLM: explanation only")
 
 
 def predict(audio_bytes: bytes) -> dict:
@@ -71,7 +71,7 @@ def predict(audio_bytes: bytes) -> dict:
     1. Load and preprocess audio (any format)
     2. Run wav2vec2 model → AIVoice / HumanVoice probability
     3. Map to REAL/FAKE label
-    4. Get Featherless explanation
+    4. Get Groq LLM explanation
     """
     global _model, _extractor, _model_sr
 
@@ -129,7 +129,7 @@ def predict(audio_bytes: bytes) -> dict:
     except Exception:
         pass
 
-    # Step 4: Get Featherless explanation
+    # Step 4: Get Groq LLM explanation
     reasoning = get_explanation(label, confidence, ai_prob, human_prob, measurements)
 
     result = {
@@ -148,8 +148,8 @@ def predict(audio_bytes: bytes) -> dict:
 
 
 def get_explanation(label, confidence, ai_prob, human_prob, measurements):
-    """Ask Featherless to explain the verdict."""
-    if not FEATHERLESS_API_KEY:
+    """Ask Groq LLM to explain the verdict."""
+    if not GROQ_API_KEY:
         if label == "REAL":
             return f"Deep learning analysis indicates genuine human speech with {confidence:.0%} confidence. The wav2vec2 model detected natural vocal patterns."
         else:
@@ -168,13 +168,13 @@ Write 2 concise sentences explaining why this audio was classified as {label}. R
 
     try:
         r = requests.post(
-            FEATHERLESS_API_URL,
+            GROQ_API_URL,
             headers={
-                "Authorization": f"Bearer {FEATHERLESS_API_KEY}",
+                "Authorization": f"Bearer {GROQ_API_KEY}",
                 "Content-Type": "application/json",
             },
             json={
-                "model": FEATHERLESS_MODEL,
+                "model": GROQ_MODEL,
                 "messages": [{"role": "user", "content": prompt}],
                 "max_tokens": 120,
                 "temperature": 0.2,
@@ -184,7 +184,7 @@ Write 2 concise sentences explaining why this audio was classified as {label}. R
         if r.status_code == 200:
             return r.json().get("choices", [{}])[0].get("message", {}).get("content", "").strip().strip('"')
     except Exception as e:
-        logger.warning(f"Explanation failed: {e}")
+        logger.warning(f"Groq explanation failed: {e}")
 
     if label == "REAL":
         return f"Deep learning analysis indicates genuine human speech with {confidence:.0%} confidence."

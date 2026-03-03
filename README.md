@@ -87,7 +87,7 @@ All three services start automatically. Frontend at `http://localhost:5173`.
 - 📁 **File upload** — drag & drop .wav/.mp3
 - 🧠 **SVM-based acoustic analysis** — MFCC, spectral centroid, ZCR, bandwidth
 - 📊 **Confidence metrics** — circular gauge + feature breakdown
-- 🔐 **Liveness verification** — optional semantic check via Featherless AI
+- 🔐 **Liveness verification** — optional semantic check via Groq AI
 - 🎨 **Premium dark UI** — glassmorphism, animations, responsive
 
 ---
@@ -98,9 +98,9 @@ All three services start automatically. Frontend at `http://localhost:5173`.
 |----------|---------|-------------|
 | `PORT` | `3001` | Backend port |
 | `AI_SERVICE_URL` | `http://localhost:8000` | AI service URL |
-| `FEATHERLESS_API_URL` | — | Optional reasoning AI URL |
-| `FEATHERLESS_API_KEY` | — | Optional reasoning AI key |
-| `FEATHERLESS_MODEL` | `meta-llama/Meta-Llama-3.1-8B-Instruct` | Optional model name |
+| `GROQ_API_URL` | — | Groq API URL (auto-configured) |
+| `GROQ_API_KEY` | — | Groq API key for LLM reasoning |
+| `GROQ_MODEL` | `llama3-8b-8192` | Groq model name |
 | `VITE_API_URL` | — | Frontend → backend URL (for production) |
 
 ---

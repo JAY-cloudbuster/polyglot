@@ -264,15 +264,15 @@ class TestExplanation:
         assert len(text) > 10
 
     def test_explanation_without_api_key(self):
-        """T25 — Fallback explanation works without Featherless."""
+        """T25 — Fallback explanation works without Groq."""
         import inference
-        old_key = inference.FEATHERLESS_API_KEY
-        inference.FEATHERLESS_API_KEY = ""
+        old_key = inference.GROQ_API_KEY
+        inference.GROQ_API_KEY = ""
         try:
             text = inference.get_explanation("REAL", 0.9, 0.1, 0.9, {})
             assert "confidence" in text.lower() or "human" in text.lower()
         finally:
-            inference.FEATHERLESS_API_KEY = old_key
+            inference.GROQ_API_KEY = old_key
 
 
 # ──────────────────────────────────────────────
@@ -336,10 +336,10 @@ class TestConfiguration:
         from inference import HF_MODEL_NAME
         assert HF_MODEL_NAME == "Hemgg/Deepfake-audio-detection"
 
-    def test_featherless_url_set(self):
-        """T32 — Featherless API URL is configured."""
-        from inference import FEATHERLESS_API_URL
-        assert "featherless" in FEATHERLESS_API_URL.lower()
+    def test_groq_url_set(self):
+        """T32 — Groq API URL is configured."""
+        from inference import GROQ_API_URL
+        assert "groq" in GROQ_API_URL.lower()
 
     def test_target_sample_rate(self):
         """T33 — Target sample rate is 16kHz."""

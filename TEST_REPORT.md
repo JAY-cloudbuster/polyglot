@@ -69,7 +69,7 @@
 |---|---|---|
 | T23 | Explanation generated for REAL verdict | ✅ |
 | T24 | Explanation generated for FAKE verdict | ✅ |
-| T25 | Fallback explanation without Featherless API | ✅ |
+| T25 | Fallback explanation without Groq API | ✅ |
 
 ### 6. FastAPI Endpoints (5/5 ✅)
 
@@ -86,7 +86,7 @@
 | ID | Test | Status |
 |---|---|---|
 | T31 | HuggingFace model name is configured | ✅ |
-| T32 | Featherless API URL is configured | ✅ |
+| T32 | Groq API URL is configured | ✅ |
 | T33 | Target sample rate = 16kHz | ✅ |
 | T34 | Model sample rate is valid | ✅ |
 
