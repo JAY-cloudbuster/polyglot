@@ -11,13 +11,20 @@ export async function analyzeAudio(audioBlob) {
     const formData = new FormData();
     formData.append('audio', audioBlob, 'recording.wav');
 
-    const response = await fetch(`${API_BASE}/analyze`, {
-        method: 'POST',
-        body: formData,
-    });
+    let response;
+    try {
+        response = await fetch(`${API_BASE}/analyze`, {
+            method: 'POST',
+            body: formData,
+        });
+    } catch (networkErr) {
+        throw new Error(
+            'AI Service unavailable — please ensure the backend (npm start in backend/) and AI service (python app.py in ai-service/) are running locally.'
+        );
+    }
 
     if (!response.ok) {
-        const err = await response.json().catch(() => ({ error: 'Network error' }));
+        const err = await response.json().catch(() => ({ error: 'Server error' }));
         throw new Error(err.error || err.detail || `Server error (${response.status})`);
     }
 
