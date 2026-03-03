@@ -296,31 +296,31 @@ class TestFastAPIEndpoints:
         assert data["service"] == "polyglot-ghost-ai"
         assert data["status"] == "running"
 
-    def test_predict_with_valid_audio(self, client):
-        """T27 — POST /predict with valid WAV returns prediction."""
+    def test_analyze_with_valid_audio(self, client):
+        """T27 — POST /analyze with valid WAV returns prediction."""
         wav = create_wav_bytes(duration=1.0)
-        r = client.post("/predict", files={"file": ("test.wav", wav, "audio/wav")})
+        r = client.post("/analyze", files={"audio": ("test.wav", wav, "audio/wav")})
         assert r.status_code == 200
         data = r.json()
-        assert "label" in data
-        assert data["label"] in ("REAL", "FAKE")
+        assert "verdict" in data
+        assert data["verdict"] in ("REAL", "FAKE")
 
-    def test_predict_returns_probability(self, client):
-        """T28 — /predict response includes probability 0.5-0.99."""
+    def test_analyze_returns_confidence(self, client):
+        """T28 — /analyze response includes confidence 0.5-0.99."""
         wav = create_wav_bytes(duration=1.0)
-        r = client.post("/predict", files={"file": ("test.wav", wav, "audio/wav")})
+        r = client.post("/analyze", files={"audio": ("test.wav", wav, "audio/wav")})
         data = r.json()
-        assert 0.5 <= data["probability"] <= 0.99
+        assert 0.5 <= data["confidence"] <= 0.99
 
-    def test_predict_empty_file_rejected(self, client):
+    def test_analyze_empty_file_rejected(self, client):
         """T29 — Empty file upload returns 400."""
-        r = client.post("/predict", files={"file": ("test.wav", b"", "audio/wav")})
+        r = client.post("/analyze", files={"audio": ("test.wav", b"", "audio/wav")})
         assert r.status_code == 400
 
-    def test_predict_oversized_file_rejected(self, client):
+    def test_analyze_oversized_file_rejected(self, client):
         """T30 — File > 10MB returns 413."""
         big = b"\x00" * (11 * 1024 * 1024)
-        r = client.post("/predict", files={"file": ("big.wav", big, "audio/wav")})
+        r = client.post("/analyze", files={"audio": ("big.wav", big, "audio/wav")})
         assert r.status_code == 413
 
 

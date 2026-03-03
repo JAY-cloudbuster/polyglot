@@ -57,28 +57,18 @@ async def root():
     return {"service": "polyglot-ghost-ai", "status": "running"}
 
 
-@app.post("/predict")
-async def predict_endpoint(file: UploadFile = File(...)):
+@app.post("/analyze")
+async def analyze_endpoint(audio: UploadFile = File(...)):
     """
-    Predict whether an audio file contains real or deepfake speech.
-
-    Accepts: multipart/form-data with audio file
-    Returns: { label, probability, features_used, total_features }
+    Frontend-compatible analysis endpoint.
+    Returns the same response format as the Node.js backend gateway.
+    This allows the Vercel frontend to call FastAPI directly.
     """
-    # Validate file type
-    allowed_types = [
-        "audio/wav", "audio/x-wav", "audio/wave",
-        "audio/mpeg", "audio/mp3", "audio/ogg",
-        "audio/webm", "audio/flac",
-        "application/octet-stream",  # fallback for browser recordings
-    ]
+    content_type = audio.content_type or "application/octet-stream"
+    logger.info(f"[ANALYZE] Received: {audio.filename}, type: {content_type}")
 
-    content_type = file.content_type or "application/octet-stream"
-    logger.info(f"Received file: {file.filename}, type: {content_type}")
-
-    # Read audio bytes
     try:
-        audio_bytes = await file.read()
+        audio_bytes = await audio.read()
     except Exception as e:
         logger.error(f"Failed to read uploaded file: {e}")
         raise HTTPException(status_code=400, detail="Failed to read audio file")
@@ -86,13 +76,25 @@ async def predict_endpoint(file: UploadFile = File(...)):
     if len(audio_bytes) == 0:
         raise HTTPException(status_code=400, detail="Empty audio file")
 
-    if len(audio_bytes) > 10 * 1024 * 1024:  # 10 MB limit
+    if len(audio_bytes) > 10 * 1024 * 1024:
         raise HTTPException(status_code=413, detail="Audio file too large (max 10 MB)")
 
-    # Run inference
     try:
-        result = predict(audio_bytes)
-        return result
+        prediction = predict(audio_bytes)
+
+        from datetime import datetime, timezone
+        response = {
+            "verdict": prediction["label"],
+            "confidence": prediction["probability"],
+            "reasoning": prediction.get("reasoning"),
+            "features_analyzed": prediction.get("total_features", 0),
+            "feature_breakdown": prediction.get("measurements", {}),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+
+        logger.info(f"[ANALYZE] Verdict: {response['verdict']} ({response['confidence']*100:.1f}%)")
+        return response
+
     except ValueError as e:
         logger.error(f"Audio processing error: {e}")
         raise HTTPException(status_code=422, detail=str(e))
@@ -101,6 +103,12 @@ async def predict_endpoint(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail="Internal inference error")
 
 
+@app.get("/health")
+async def health_check():
+    """Health check endpoint for monitoring."""
+    return {"status": "ok", "service": "polyglot-ghost-ai"}
+
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("app:app", host="0.0.0.0", port=7860, reload=True)

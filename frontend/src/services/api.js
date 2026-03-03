@@ -1,7 +1,9 @@
 /**
- * API service — communicates with backend.
+ * API service — communicates with AI backend.
+ * Production: Hugging Face Spaces (24/7 cloud)
+ * Development: localhost:8000 (local FastAPI)
  */
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_BASE = import.meta.env.VITE_API_URL || 'https://kjayeshrao-5315-polyglot-ghost.hf.space';
 /**
  * Send audio blob to /analyze endpoint.
  * @param {Blob} audioBlob
