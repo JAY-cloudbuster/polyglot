@@ -1,9 +1,9 @@
 /**
  * API service — communicates with AI backend.
- * Production: Hugging Face Spaces (24/7 cloud)
- * Development: localhost:8000 (local FastAPI)
+ * Set VITE_API_URL in Vercel env vars after deploying AI service to cloud.
+ * Local dev: defaults to localhost:8000 (FastAPI directly)
  */
-const API_BASE = import.meta.env.VITE_API_URL || 'https://kjayeshrao-5315-polyglot-ghost.hf.space';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 /**
  * Send audio blob to /analyze endpoint.
  * @param {Blob} audioBlob
