@@ -147,16 +147,104 @@ def predict(audio_bytes: bytes) -> dict:
     return result
 
 
-def get_explanation(label, confidence, ai_prob, human_prob, measurements):
-    """Ask Groq LLM to explain the verdict."""
-    if not GROQ_API_KEY:
-        if label == "REAL":
-            return f"Deep learning analysis indicates genuine human speech with {confidence:.0%} confidence. The wav2vec2 model detected natural vocal patterns."
-        else:
-            return f"Deep learning analysis detected AI-generated speech artifacts with {confidence:.0%} confidence. The wav2vec2 model found synthetic voice patterns."
+def _build_local_explanation(label, confidence, ai_prob, human_prob, m):
+    """
+    Smart, self-contained forensic explanation engine.
+    Uses actual acoustic measurements to generate detailed reasoning
+    WITHOUT any external API. Works offline, forever, for free.
+    """
+    reasons = []
 
-    m = measurements
-    prompt = f"""A state-of-the-art wav2vec2 deep learning model analyzed an audio sample for deepfake detection.
+    if label == "FAKE":
+        # Pitch analysis
+        pitch_std = m.get("pitch_std_hz", None)
+        if pitch_std is not None and pitch_std < 20:
+            reasons.append(f"unnaturally flat pitch variation ({pitch_std:.1f} Hz std)")
+        elif pitch_std is not None:
+            reasons.append(f"pitch deviation of {pitch_std:.1f} Hz")
+
+        # Dynamic range
+        dyn = m.get("rms_dynamic_range", None)
+        if dyn is not None and dyn < 8:
+            reasons.append(f"compressed dynamic range ({dyn:.1f}x)")
+
+        # Spectral flatness
+        sf = m.get("spectral_flatness_mean", None)
+        if sf is not None and sf < 0.01:
+            reasons.append("abnormally smooth spectral profile")
+
+        # Silence noise
+        sn = m.get("silence_noise_level", None)
+        if sn is not None and sn < 0.002:
+            reasons.append("digitally clean silence (no natural mic noise)")
+
+        # HF ratio
+        hf = m.get("hf_to_lf_ratio", None)
+        if hf is not None and hf < 0.1:
+            reasons.append("reduced high-frequency breath detail")
+
+        if reasons:
+            detail = ", ".join(reasons[:3])
+            return (
+                f"The wav2vec2 neural network detected synthetic speech patterns with "
+                f"{confidence:.0%} confidence. Key acoustic anomalies include {detail}, "
+                f"which are characteristic signatures of AI voice synthesis engines."
+            )
+        return (
+            f"Deep learning inference classified this audio as AI-generated with "
+            f"{confidence:.0%} confidence (AI probability: {ai_prob:.1%}). "
+            f"The acoustic waveform exhibits structural patterns consistent with "
+            f"text-to-speech or voice cloning algorithms."
+        )
+
+    else:  # REAL
+        # Pitch analysis
+        pitch_std = m.get("pitch_std_hz", None)
+        if pitch_std is not None and pitch_std > 25:
+            reasons.append(f"natural pitch modulation ({pitch_std:.1f} Hz std)")
+
+        # Dynamic range
+        dyn = m.get("rms_dynamic_range", None)
+        if dyn is not None and dyn > 10:
+            reasons.append(f"wide dynamic range ({dyn:.1f}x)")
+
+        # Silence noise
+        sn = m.get("silence_noise_level", None)
+        if sn is not None and sn > 0.003:
+            reasons.append("organic background microphone noise")
+
+        # HF ratio
+        hf = m.get("hf_to_lf_ratio", None)
+        if hf is not None and hf > 0.12:
+            reasons.append("rich high-frequency breath detail")
+
+        if reasons:
+            detail = ", ".join(reasons[:3])
+            return (
+                f"The wav2vec2 neural network identified genuine human speech with "
+                f"{confidence:.0%} confidence. Acoustic markers include {detail}, "
+                f"indicating natural vocal tract resonance and organic speech production."
+            )
+        return (
+            f"Deep learning inference classified this audio as authentic human speech "
+            f"with {confidence:.0%} confidence (Human probability: {human_prob:.1%}). "
+            f"The waveform structure is consistent with natural vocal production."
+        )
+
+
+def get_explanation(label, confidence, ai_prob, human_prob, measurements):
+    """
+    Generate forensic explanation for the verdict.
+    
+    Strategy:
+      1. Try Groq LLM if API key is available (enhanced explanation)
+      2. Fall back to smart local engine (works forever, offline, free)
+    """
+    m = measurements or {}
+
+    # Try Groq LLM for enhanced explanation (optional)
+    if GROQ_API_KEY:
+        prompt = f"""A state-of-the-art wav2vec2 deep learning model analyzed an audio sample for deepfake detection.
 
 Result: {label} ({confidence:.0%} confidence)
 AI voice probability: {ai_prob:.2%}
@@ -166,27 +254,27 @@ Audio characteristics: pitch_std={m.get('pitch_std_hz', 'N/A')}Hz, spectral_cent
 
 Write 2 concise sentences explaining why this audio was classified as {label}. Reference specific audio characteristics. No labels or JSON — just the explanation."""
 
-    try:
-        r = requests.post(
-            GROQ_API_URL,
-            headers={
-                "Authorization": f"Bearer {GROQ_API_KEY}",
-                "Content-Type": "application/json",
-            },
-            json={
-                "model": GROQ_MODEL,
-                "messages": [{"role": "user", "content": prompt}],
-                "max_tokens": 120,
-                "temperature": 0.2,
-            },
-            timeout=15,
-        )
-        if r.status_code == 200:
-            return r.json().get("choices", [{}])[0].get("message", {}).get("content", "").strip().strip('"')
-    except Exception as e:
-        logger.warning(f"Groq explanation failed: {e}")
+        try:
+            r = requests.post(
+                GROQ_API_URL,
+                headers={
+                    "Authorization": f"Bearer {GROQ_API_KEY}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": GROQ_MODEL,
+                    "messages": [{"role": "user", "content": prompt}],
+                    "max_tokens": 120,
+                    "temperature": 0.2,
+                },
+                timeout=15,
+            )
+            if r.status_code == 200:
+                text = r.json().get("choices", [{}])[0].get("message", {}).get("content", "").strip().strip('"')
+                if text and len(text) > 10:
+                    return text
+        except Exception as e:
+            logger.warning(f"Groq explanation unavailable ({e}), using local engine")
 
-    if label == "REAL":
-        return f"Deep learning analysis indicates genuine human speech with {confidence:.0%} confidence."
-    else:
-        return f"Deep learning analysis detected AI-generated speech patterns with {confidence:.0%} confidence."
+    # Always works: smart local explanation using actual measurements
+    return _build_local_explanation(label, confidence, ai_prob, human_prob, m)
