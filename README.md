@@ -11,7 +11,7 @@
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 ┌──────────────────┐          ┌──────────────────────────────┐
@@ -26,33 +26,32 @@
 
 ---
 
-## ✨ Features
+## Features
 
 ### Core Detection
-- 🧠 **wav2vec2 Deep Learning** — HuggingFace `Hemgg/Deepfake-audio-detection` model (400MB)
-- 📊 **Bayesian Confidence Scoring** — Posterior probability with Gaussian smoothing
-- 🔬 **Acoustic Forensics** — Pitch std, spectral centroid, dynamic range, HF/LF ratio, silence noise
-- 💬 **Explainable AI** — Groq LLM (Llama 3 8B) generates human-readable forensic reasoning
-- 🛡️ **Self-contained Fallback** — Smart local explanation engine works offline without any API
+-  **wav2vec2 Deep Learning** — HuggingFace `Hemgg/Deepfake-audio-detection` model (400MB)
+-  **Bayesian Confidence Scoring** — Posterior probability with Gaussian smoothing
+-  **Acoustic Forensics** — Pitch std, spectral centroid, dynamic range, HF/LF ratio, silence noise
+-  **Explainable AI** — Groq LLM (Llama 3 8B) generates human-readable forensic reasoning
+-  **Self-contained Fallback** — Smart local explanation engine works offline without any API
 
 ### User Interface
-- 🎙️ **Live recording** via browser microphone
-- 📁 **File upload** — drag & drop .wav/.mp3/.webm/.ogg/.flac
-- 📊 **Confidence metrics** — circular gauge + feature breakdown
-- 🔐 **Liveness verification** — semantic check via Groq AI
-- 📄 **PDF Report Generation** — downloadable forensic evidence report
-- 👻 **Cinematic Intro** — GSAP-powered 5-phase animation with circuit-board ghost SVG
-- 🎨 **Premium Dark UI** — glassmorphism, CRT scan lines, micro-animations, responsive
-
+-  **Live recording** via browser microphone
+-  **File upload** — drag & drop .wav/.mp3/.webm/.ogg/.flac
+-  **Confidence metrics** — circular gauge + feature breakdown
+-  **Liveness verification** — semantic check via Groq AI
+-  **PDF Report Generation** — downloadable forensic evidence report
+-  **Cinematic Intro** — GSAP-powered 5-phase animation with circuit-board ghost SVG
+-  **Premium Dark UI** — glassmorphism, CRT scan lines, micro-animations, responsiv
 ### Engineering
-- 🐳 **Docker-ready** — Dockerfile for cloud deployment
-- ☁️ **Cloud Deployable** — Hugging Face Spaces (AI) + Vercel (Frontend)
-- 🧪 **34 Unit Tests** — Full test coverage across all modules
-- 🔒 **Privacy-by-Design** — Zero data retention, stateless processing
+-  **Docker-ready** — Dockerfile for cloud deployment
+-  **Cloud Deployable** — Hugging Face Spaces (AI) + Vercel (Frontend)
+-  **34 Unit Tests** — Full test coverage across all modules
+-  **Privacy-by-Design** — Zero data retention, stateless processing
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -82,7 +81,7 @@ Open **http://localhost:5173** in your browser.
 
 ---
 
-## 🐳 Docker
+## Docker
 
 ### Local Docker
 ```bash
@@ -136,7 +135,7 @@ Then set `VITE_API_URL` in Vercel to your Space URL.
 
 ---
 
-## 🧬 ML Pipeline
+## ML Pipeline
 
 ```
 Audio Input (any format)
@@ -193,7 +192,7 @@ A full-screen GSAP-powered intro sequence plays on first load:
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 polyglot_ghost/
@@ -250,7 +249,7 @@ polyglot_ghost/
 
 ---
 
-## ⚙️ Environment Variables
+## Environment Variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
@@ -263,7 +262,7 @@ polyglot_ghost/
 
 ---
 
-## 🧪 Testing
+## Testing
 
 ```bash
 cd ai-service
@@ -281,7 +280,7 @@ pytest test_ai_service.py -v
 
 ---
 
-## 🛡️ Privacy & Security
+## Privacy & Security
 
 - **Zero data retention** — Audio is processed in-memory and never stored
 - **Stateless architecture** — No database, no user tracking, no cookies
@@ -290,7 +289,7 @@ pytest test_ai_service.py -v
 
 ---
 
-## 📚 Research Foundation
+## Research Foundation
 
 This system builds on the following research:
 
@@ -300,11 +299,11 @@ This system builds on the following research:
 
 ---
 
-## 🚢 Deployment
+## Deployment
 
 | Component | Platform | Cost | Status |
 |-----------|----------|------|--------|
-| Frontend | Vercel | Free | ✅ Live |
+| Frontend | Vercel | Free | completed |
 | AI Service | Hugging Face Spaces | Free (CPU) | 🔧 Deploy via `hf-space-deploy/` |
 
 ---
