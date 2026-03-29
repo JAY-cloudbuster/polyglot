@@ -27,6 +27,12 @@ export default function Navbar() {
                         >
                             Upload
                         </Link>
+                        <Link
+                            to="/project-details"
+                            className={`navbar__link navbar__link--details ${pathname === '/project-details' ? 'navbar__link--active' : ''}`}
+                        >
+                            Project Details
+                        </Link>
                         <button
                             className="about-trigger"
                             onClick={() => setShowAbout(true)}

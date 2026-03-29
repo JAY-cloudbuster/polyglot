@@ -6,6 +6,7 @@ import RhythmBackground from './components/RhythmBackground'
 import Landing from './pages/Landing'
 import RecordPage from './pages/RecordPage'
 import UploadPage from './pages/UploadPage'
+import ProjectDetails from './pages/ProjectDetails'
 
 function App() {
     const [introComplete, setIntroComplete] = useState(false)
@@ -24,6 +25,7 @@ function App() {
                     <Route path="/" element={<Landing />} />
                     <Route path="/record" element={<RecordPage />} />
                     <Route path="/upload" element={<UploadPage />} />
+                    <Route path="/project-details" element={<ProjectDetails />} />
                 </Routes>
                 <footer className="footer">
                     Polyglot Ghost &copy; {new Date().getFullYear()}
