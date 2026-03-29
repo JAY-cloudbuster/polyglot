@@ -303,7 +303,7 @@ This system builds on the following research:
 
 | Component | Platform | Cost | Status |
 |-----------|----------|------|--------|
-| Frontend | Vercel | Free | completed |
+| Frontend | Vercel | Free | working |
 | AI Service | Hugging Face Spaces | Free (CPU) | 🔧 Deploy via `hf-space-deploy/` |
 
 ---
