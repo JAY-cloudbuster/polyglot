@@ -1,4 +1,581 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
+
+/* ─── Animated Processing Simulator ─── */
+function ProcessingSimulator() {
+    const [simState, setSimState] = useState('idle') // idle | running | done
+    const [activeStep, setActiveStep] = useState(-1)
+    const [completedSteps, setCompletedSteps] = useState([])
+    const [logs, setLogs] = useState([])
+    const [progress, setProgress] = useState(0)
+    const logsEndRef = useRef(null)
+    const timerRef = useRef(null)
+    const canvasRef = useRef(null)
+    const animFrameRef = useRef(null)
+
+    const steps = [
+        {
+            id: 'upload',
+            icon: '📤',
+            title: 'Audio Upload',
+            subtitle: 'Browser → Server',
+            duration: 1200,
+            color: '#6366f1',
+            logs: [
+                '> User clicks "Analyze" button',
+                '> Creating FormData with audio blob...',
+                '> POST /analyze (multipart/form-data)',
+                '> Content-Type: audio/wav, Size: 2.4 MB',
+                '✓ Upload complete — 200 OK',
+            ],
+            visual: 'upload',
+        },
+        {
+            id: 'validate',
+            icon: '🛡️',
+            title: 'Server Validation',
+            subtitle: 'FastAPI Endpoint',
+            duration: 800,
+            color: '#8b5cf6',
+            logs: [
+                '> FastAPI receives UploadFile object',
+                '> Checking content type: audio/wav ✓',
+                '> Reading bytes into memory buffer...',
+                '> File size: 2,457,600 bytes (< 10 MB limit) ✓',
+                '✓ Validation passed',
+            ],
+            visual: 'validate',
+        },
+        {
+            id: 'decode',
+            icon: '🔊',
+            title: 'Audio Decoding',
+            subtitle: 'librosa · soundfile',
+            duration: 1400,
+            color: '#a855f7',
+            logs: [
+                '> librosa.load(audio_bytes, sr=None)',
+                '> Detected format: WAV (PCM, 44100 Hz)',
+                '> Decoding audio samples...',
+                '> Original: 44100 Hz, 2 channels, 5.2s',
+                '> Resampling to 16000 Hz mono...',
+                '> Normalizing amplitude to [-1.0, 1.0]',
+                '✓ Waveform ready: 83,200 samples',
+            ],
+            visual: 'waveform',
+        },
+        {
+            id: 'features',
+            icon: '🧬',
+            title: 'wav2vec2 Feature Extraction',
+            subtitle: 'HuggingFace Transformers',
+            duration: 2000,
+            color: '#ec4899',
+            logs: [
+                '> Loading Wav2Vec2FeatureExtractor...',
+                '> Tokenizing waveform → input_values tensor',
+                '> Tensor shape: [1, 83200]',
+                '> Forward pass through 12 transformer layers...',
+                '> Layer 1/12... Layer 4/12... Layer 8/12...',
+                '> Layer 12/12 complete',
+                '> Extracting hidden states → logits',
+                '✓ Feature extraction complete',
+            ],
+            visual: 'neural',
+        },
+        {
+            id: 'classify',
+            icon: '⚖️',
+            title: 'Neural Classification',
+            subtitle: '2-class Softmax',
+            duration: 1000,
+            color: '#f43f5e',
+            logs: [
+                '> Applying classification head...',
+                '> Raw logits: [3.241, -2.876]',
+                '> Softmax probabilities:',
+                '  → P(FAKE)  = 0.9977',
+                '  → P(REAL)  = 0.0023',
+                '> Predicted class: "FAKE" (index: 0)',
+                '✓ Classification complete',
+            ],
+            visual: 'classify',
+        },
+        {
+            id: 'bayesian',
+            icon: '📐',
+            title: 'Bayesian Calibration',
+            subtitle: 'Gaussian Smoothing',
+            duration: 1200,
+            color: '#f97316',
+            logs: [
+                '> Applying Gaussian smoothing kernel...',
+                '> σ = 0.15, window = 5 samples',
+                '> Computing posterior probability...',
+                '> Prior P(FAKE) = 0.5 (uniform)',
+                '> Likelihood ratio: 434.2',
+                '> Calibrated confidence: 0.8714',
+                '✓ Bayesian score: 87.14%',
+            ],
+            visual: 'bayesian',
+        },
+        {
+            id: 'forensics',
+            icon: '🔬',
+            title: 'Acoustic Forensics',
+            subtitle: '7 Feature Metrics',
+            duration: 1600,
+            color: '#eab308',
+            logs: [
+                '> Extracting pitch contour (yin algorithm)...',
+                '  → pitch_std: 12.3 Hz (LOW — suspicious)',
+                '> Computing spectral centroid...',
+                '  → spectral_centroid_std: 450.2 Hz',
+                '> Measuring RMS dynamic range...',
+                '  → rms_dynamic_range: 5.2× (COMPRESSED)',
+                '> Spectral flatness: 0.008',
+                '> Silence noise: 0.001 (CLEAN — suspicious)',
+                '> HF/LF ratio: 0.07',
+                '> Zero crossing std: 0.12',
+                '✓ All 7 metrics extracted',
+            ],
+            visual: 'forensics',
+        },
+        {
+            id: 'llm',
+            icon: '💬',
+            title: 'LLM Explanation',
+            subtitle: 'Groq · Llama 3 8B',
+            duration: 1800,
+            color: '#34d399',
+            logs: [
+                '> Composing prompt with verdict + metrics...',
+                '> POST api.groq.com/v1/chat/completions',
+                '> Model: llama3-8b-8192',
+                '> Streaming response tokens...',
+                '> "The wav2vec2 neural network detected',
+                '>  synthetic speech patterns with 87%',
+                '>  confidence. Key acoustic anomalies',
+                '>  include unnaturally flat pitch..."',
+                '✓ Forensic explanation generated (147 tokens)',
+            ],
+            visual: 'llm',
+        },
+        {
+            id: 'response',
+            icon: '📊',
+            title: 'JSON Response',
+            subtitle: 'Final Output',
+            duration: 800,
+            color: '#22d3ee',
+            logs: [
+                '> Assembling response JSON...',
+                '> {',
+                '>   "verdict": "FAKE",',
+                '>   "confidence": 0.8714,',
+                '>   "reasoning": "The wav2vec2...",',
+                '>   "features_analyzed": 7,',
+                '>   "timestamp": "2026-03-30T..."',
+                '> }',
+                '✓ Response sent → 200 OK (2.8s total)',
+            ],
+            visual: 'response',
+        },
+    ]
+
+    // Waveform canvas drawing
+    useEffect(() => {
+        const canvas = canvasRef.current
+        if (!canvas) return
+        const ctx = canvas.getContext('2d')
+        const w = canvas.width
+        const h = canvas.height
+        let t = 0
+
+        const drawFrame = () => {
+            ctx.clearRect(0, 0, w, h)
+
+            if (activeStep === -1 && simState === 'idle') {
+                // Idle — flat line with subtle pulse
+                ctx.strokeStyle = 'rgba(99, 102, 241, 0.3)'
+                ctx.lineWidth = 2
+                ctx.beginPath()
+                for (let x = 0; x < w; x++) {
+                    const y = h / 2 + Math.sin(x * 0.02 + t * 0.02) * 3
+                    x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
+                }
+                ctx.stroke()
+            } else if (activeStep >= 0 && activeStep <= 2) {
+                // Upload / Validate / Decode → waveform building
+                const col = steps[Math.max(0, activeStep)]?.color || '#6366f1'
+                ctx.strokeStyle = col
+                ctx.lineWidth = 2
+                ctx.shadowColor = col
+                ctx.shadowBlur = 8
+                ctx.beginPath()
+                const amp = activeStep === 2 ? 30 : 8 + activeStep * 8
+                const freq = activeStep === 2 ? 0.06 : 0.03
+                for (let x = 0; x < w; x++) {
+                    const noise = Math.sin(x * 0.15 + t * 0.05) * 5
+                    const y = h / 2 + Math.sin(x * freq + t * 0.03) * amp + noise
+                    x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
+                }
+                ctx.stroke()
+                ctx.shadowBlur = 0
+            } else if (activeStep >= 3 && activeStep <= 4) {
+                // Neural network — particle grid
+                const col = steps[activeStep]?.color || '#ec4899'
+                const cols = 20
+                const rows = 6
+                const gapX = w / (cols + 1)
+                const gapY = h / (rows + 1)
+                for (let r = 0; r < rows; r++) {
+                    for (let c = 0; c < cols; c++) {
+                        const cx = gapX * (c + 1)
+                        const cy = gapY * (r + 1)
+                        const pulse = Math.sin(t * 0.04 + c * 0.5 + r * 0.3) * 0.5 + 0.5
+                        const radius = 2 + pulse * 3
+                        ctx.beginPath()
+                        ctx.arc(cx, cy, radius, 0, Math.PI * 2)
+                        ctx.fillStyle = col
+                        ctx.globalAlpha = 0.3 + pulse * 0.7
+                        ctx.fill()
+                        ctx.globalAlpha = 1
+                        // connections
+                        if (c < cols - 1) {
+                            ctx.strokeStyle = col
+                            ctx.globalAlpha = 0.1 + pulse * 0.15
+                            ctx.lineWidth = 1
+                            ctx.beginPath()
+                            ctx.moveTo(cx, cy)
+                            ctx.lineTo(gapX * (c + 2), gapY * (r + 1))
+                            ctx.stroke()
+                            ctx.globalAlpha = 1
+                        }
+                    }
+                }
+            } else if (activeStep === 5) {
+                // Bayesian — gaussian curve
+                const col = steps[activeStep]?.color || '#f97316'
+                ctx.strokeStyle = col
+                ctx.lineWidth = 2.5
+                ctx.shadowColor = col
+                ctx.shadowBlur = 10
+                ctx.beginPath()
+                for (let x = 0; x < w; x++) {
+                    const xn = (x - w * 0.65) / (w * 0.12)
+                    const gauss = Math.exp(-0.5 * xn * xn)
+                    const y = h - 10 - gauss * (h - 30) * (0.8 + Math.sin(t * 0.03) * 0.2)
+                    x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
+                }
+                ctx.stroke()
+                ctx.shadowBlur = 0
+                // Fill under curve
+                ctx.lineTo(w, h - 10)
+                ctx.lineTo(0, h - 10)
+                ctx.closePath()
+                ctx.fillStyle = col.replace(')', ', 0.08)').replace('rgb', 'rgba')
+                ctx.globalAlpha = 0.3
+                ctx.fill()
+                ctx.globalAlpha = 1
+                // Threshold line
+                ctx.setLineDash([5, 5])
+                ctx.strokeStyle = 'rgba(255,255,255,0.2)'
+                ctx.lineWidth = 1
+                ctx.beginPath()
+                ctx.moveTo(w * 0.5, 0)
+                ctx.lineTo(w * 0.5, h)
+                ctx.stroke()
+                ctx.setLineDash([])
+            } else if (activeStep === 6) {
+                // Forensics — bar chart
+                const metrics = [0.27, 0.38, 0.35, 0.4, 0.1, 0.47, 0.48]
+                const barW = w / (metrics.length * 2 + 1)
+                const col = steps[activeStep]?.color || '#eab308'
+                metrics.forEach((val, i) => {
+                    const animVal = val * Math.min(1, (0.5 + Math.sin(t * 0.04 + i) * 0.5))
+                    const bx = barW * (i * 2 + 1)
+                    const bh = animVal * (h - 20)
+                    const gradient = ctx.createLinearGradient(bx, h - 10, bx, h - 10 - bh)
+                    gradient.addColorStop(0, col)
+                    gradient.addColorStop(1, 'rgba(99, 102, 241, 0.5)')
+                    ctx.fillStyle = gradient
+                    ctx.beginPath()
+                    ctx.roundRect(bx, h - 10 - bh, barW, bh, [4, 4, 0, 0])
+                    ctx.fill()
+                })
+            } else if (activeStep === 7) {
+                // LLM — typing effect blocks
+                const col = steps[activeStep]?.color || '#34d399'
+                const lines = 5
+                const lineH = 10
+                const gap = 8
+                const startY = h / 2 - ((lines * (lineH + gap)) / 2)
+                for (let i = 0; i < lines; i++) {
+                    const maxW = w * (0.4 + Math.random() * 0.4)
+                    const fillW = maxW * Math.min(1, (t * 0.01 - i * 0.5))
+                    if (fillW > 0) {
+                        ctx.fillStyle = col
+                        ctx.globalAlpha = 0.15 + (i % 2) * 0.1
+                        ctx.beginPath()
+                        ctx.roundRect(20, startY + i * (lineH + gap), Math.max(0, fillW), lineH, 3)
+                        ctx.fill()
+                        ctx.globalAlpha = 1
+                    }
+                }
+                // Cursor blink
+                if (Math.floor(t * 0.06) % 2 === 0) {
+                    const lastLine = Math.min(lines - 1, Math.floor(t * 0.01))
+                    const curX = 22 + (w * 0.6) * Math.min(1, (t * 0.01 - lastLine * 0.5))
+                    ctx.fillStyle = col
+                    ctx.fillRect(Math.min(curX, w - 25), startY + lastLine * (lineH + gap), 2, lineH)
+                }
+            } else if (activeStep === 8 || simState === 'done') {
+                // Response — JSON brackets animation
+                const col = '#22d3ee'
+                ctx.font = '14px JetBrains Mono, monospace'
+                ctx.fillStyle = col
+                ctx.globalAlpha = 0.6 + Math.sin(t * 0.05) * 0.4
+                const jsonLines = [
+                    '{ "verdict": "FAKE",',
+                    '  "confidence": 0.8714,',
+                    '  "features": 7,',
+                    '  "status": "200 OK" }',
+                ]
+                jsonLines.forEach((line, i) => {
+                    const alpha = Math.min(1, (t * 0.02 - i * 0.8))
+                    if (alpha > 0) {
+                        ctx.globalAlpha = alpha * 0.7
+                        ctx.fillText(line, 20, 25 + i * 22)
+                    }
+                })
+                ctx.globalAlpha = 1
+            }
+
+            t++
+            animFrameRef.current = requestAnimationFrame(drawFrame)
+        }
+
+        animFrameRef.current = requestAnimationFrame(drawFrame)
+        return () => {
+            if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current)
+        }
+    }, [activeStep, simState])
+
+    // Auto-scroll logs
+    useEffect(() => {
+        logsEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }, [logs])
+
+    const runSimulation = useCallback(() => {
+        if (simState === 'running') return
+        setSimState('running')
+        setActiveStep(-1)
+        setCompletedSteps([])
+        setLogs([])
+        setProgress(0)
+
+        let stepIndex = 0
+        const totalDuration = steps.reduce((s, st) => s + st.duration, 0)
+        let elapsed = 0
+
+        const runStep = () => {
+            if (stepIndex >= steps.length) {
+                setSimState('done')
+                setProgress(100)
+                setLogs(prev => [...prev, { text: '━━━ PROCESSING COMPLETE ━━━', type: 'success' }])
+                return
+            }
+
+            const step = steps[stepIndex]
+            setActiveStep(stepIndex)
+            setLogs(prev => [...prev, { text: `\n── ${step.title.toUpperCase()} ──`, type: 'header' }])
+
+            // Drip logs one by one
+            let logIdx = 0
+            const logInterval = setInterval(() => {
+                if (logIdx < step.logs.length) {
+                    setLogs(prev => [...prev, {
+                        text: step.logs[logIdx],
+                        type: step.logs[logIdx].startsWith('✓') ? 'success' : 'log'
+                    }])
+                    logIdx++
+                } else {
+                    clearInterval(logInterval)
+                }
+            }, step.duration / (step.logs.length + 1))
+
+            // Progress
+            const progressInterval = setInterval(() => {
+                elapsed += 50
+                setProgress(Math.min(99, (elapsed / totalDuration) * 100))
+            }, 50)
+
+            timerRef.current = setTimeout(() => {
+                clearInterval(progressInterval)
+                setCompletedSteps(prev => [...prev, stepIndex])
+                stepIndex++
+                runStep()
+            }, step.duration)
+        }
+
+        setTimeout(() => runStep(), 300)
+    }, [simState])
+
+    const resetSimulation = () => {
+        if (timerRef.current) clearTimeout(timerRef.current)
+        setSimState('idle')
+        setActiveStep(-1)
+        setCompletedSteps([])
+        setLogs([])
+        setProgress(0)
+    }
+
+    return (
+        <div className="pd-sim">
+            {/* Header */}
+            <div className="pd-sim__header">
+                <div className="pd-sim__header-left">
+                    <div className={`pd-sim__status ${simState === 'running' ? 'pd-sim__status--active' : simState === 'done' ? 'pd-sim__status--done' : ''}`}>
+                        <div className="pd-sim__status-dot" />
+                        {simState === 'idle' ? 'Ready' : simState === 'running' ? 'Processing' : 'Complete'}
+                    </div>
+                    <div className="pd-sim__timer">
+                        {simState === 'running' && <span className="pd-sim__timer-pulse">●</span>}
+                        {progress.toFixed(0)}%
+                    </div>
+                </div>
+                <div className="pd-sim__actions">
+                    {simState !== 'running' && (
+                        <button className="pd-sim__btn pd-sim__btn--start" onClick={runSimulation}>
+                            {simState === 'done' ? '↻ Replay' : '▶ Start Processing'}
+                        </button>
+                    )}
+                    {simState === 'running' && (
+                        <button className="pd-sim__btn pd-sim__btn--stop" onClick={resetSimulation}>
+                            ■ Stop
+                        </button>
+                    )}
+                </div>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="pd-sim__progress">
+                <div
+                    className="pd-sim__progress-fill"
+                    style={{
+                        width: `${progress}%`,
+                        background: simState === 'done'
+                            ? 'linear-gradient(90deg, #34d399, #22d3ee)'
+                            : 'linear-gradient(90deg, #6366f1, #a855f7, #ec4899)'
+                    }}
+                />
+            </div>
+
+            {/* Main Content - Two Panels */}
+            <div className="pd-sim__body">
+                {/* Left: Step List */}
+                <div className="pd-sim__steps">
+                    {steps.map((step, i) => (
+                        <div
+                            key={step.id}
+                            className={`pd-sim__step
+                                ${activeStep === i ? 'pd-sim__step--active' : ''}
+                                ${completedSteps.includes(i) ? 'pd-sim__step--done' : ''}
+                                ${activeStep > i && !completedSteps.includes(i) ? 'pd-sim__step--past' : ''}
+                            `}
+                            style={{ '--step-color': step.color }}
+                        >
+                            <div className="pd-sim__step-marker">
+                                {completedSteps.includes(i) ? (
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                                        <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                ) : activeStep === i ? (
+                                    <div className="pd-sim__step-spinner" />
+                                ) : (
+                                    <span>{step.icon}</span>
+                                )}
+                            </div>
+                            <div className="pd-sim__step-info">
+                                <div className="pd-sim__step-title">{step.title}</div>
+                                <div className="pd-sim__step-sub">{step.subtitle}</div>
+                            </div>
+                            {activeStep === i && (
+                                <div className="pd-sim__step-active-indicator" />
+                            )}
+                        </div>
+                    ))}
+                </div>
+
+                {/* Right: Canvas + Terminal */}
+                <div className="pd-sim__panel">
+                    {/* Canvas Visualization */}
+                    <div className="pd-sim__canvas-wrap">
+                        <div className="pd-sim__canvas-label">
+                            {activeStep >= 0 ? steps[activeStep]?.title : simState === 'done' ? 'Complete' : 'Waiting for input...'}
+                        </div>
+                        <canvas
+                            ref={canvasRef}
+                            width={460}
+                            height={120}
+                            className="pd-sim__canvas"
+                        />
+                    </div>
+
+                    {/* Terminal Log */}
+                    <div className="pd-sim__terminal">
+                        <div className="pd-sim__terminal-bar">
+                            <div className="pd-sim__terminal-dots">
+                                <span /><span /><span />
+                            </div>
+                            <div className="pd-sim__terminal-title">processing_log</div>
+                        </div>
+                        <div className="pd-sim__terminal-body">
+                            {logs.length === 0 && (
+                                <div className="pd-sim__terminal-empty">
+                                    Press "Start Processing" to begin the simulation...
+                                </div>
+                            )}
+                            {logs.map((log, i) => (
+                                <div
+                                    key={i}
+                                    className={`pd-sim__log pd-sim__log--${log.type}`}
+                                    style={{ animationDelay: `${i * 30}ms` }}
+                                >
+                                    {log.text}
+                                </div>
+                            ))}
+                            <div ref={logsEndRef} />
+                        </div>
+                    </div>
+
+                    {/* Final Verdict Card */}
+                    {simState === 'done' && (
+                        <div className="pd-sim__verdict animate-in">
+                            <div className="pd-sim__verdict-header">
+                                <div className="pd-sim__verdict-dot" />
+                                <span className="pd-sim__verdict-label">FAKE</span>
+                                <span className="pd-sim__verdict-badge">Deepfake Detected</span>
+                            </div>
+                            <div className="pd-sim__verdict-gauge">
+                                <div className="pd-sim__verdict-gauge-track">
+                                    <div className="pd-sim__verdict-gauge-fill" />
+                                </div>
+                                <div className="pd-sim__verdict-gauge-text">87.14%</div>
+                            </div>
+                            <p className="pd-sim__verdict-reason">
+                                "The wav2vec2 neural network detected synthetic speech patterns
+                                with 87% confidence. Key anomalies: flat pitch variation (12.3 Hz),
+                                compressed dynamic range (5.2×), unnaturally clean silence."
+                            </p>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    )
+}
+
 
 export default function ProjectDetails() {
     const sectionsRef = useRef([])
@@ -121,6 +698,17 @@ export default function ProjectDetails() {
                         </div>
                     </div>
                 </div>
+            </section>
+
+            {/* ─── Behind the Scenes — Interactive Animated Simulator ─── */}
+            <section className="pd-section" ref={addRef}>
+                <div className="pd-section__label">Interactive</div>
+                <h2 className="pd-section__title">Behind the Scenes</h2>
+                <p className="pd-section__desc">
+                    Watch exactly what happens when you submit audio for analysis.
+                    Click "Start Processing" to see each step animate in real-time.
+                </p>
+                <ProcessingSimulator />
             </section>
 
             {/* ─── ML Pipeline ─── */}
