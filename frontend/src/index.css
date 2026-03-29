@@ -2040,6 +2040,455 @@ a:hover {
   background: var(--bg-glass-hover);
 }
 
+/* ─── Processing Simulator ─── */
+.pd-sim {
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: rgba(10, 10, 18, 0.8);
+  backdrop-filter: blur(var(--blur));
+  overflow: hidden;
+}
+
+.pd-sim__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-glass);
+}
+
+.pd-sim__header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.pd-sim__status {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  font-family: var(--mono);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.pd-sim__status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  transition: all 0.3s ease;
+}
+
+.pd-sim__status--active {
+  color: var(--accent-text);
+}
+
+.pd-sim__status--active .pd-sim__status-dot {
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+  animation: pulse-dot 1s ease-in-out infinite;
+}
+
+.pd-sim__status--done {
+  color: var(--green);
+}
+
+.pd-sim__status--done .pd-sim__status-dot {
+  background: var(--green);
+  box-shadow: 0 0 8px rgba(52, 211, 153, 0.5);
+}
+
+.pd-sim__timer {
+  font-size: 0.82rem;
+  font-family: var(--mono);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.pd-sim__timer-pulse {
+  color: var(--red);
+  animation: pulse-dot 1s ease-in-out infinite;
+  margin-right: 0.25rem;
+}
+
+.pd-sim__actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.pd-sim__btn {
+  padding: 0.4rem 1rem;
+  border-radius: var(--radius-xs);
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-family: var(--mono);
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.pd-sim__btn--start {
+  background: linear-gradient(135deg, var(--accent), #a855f7);
+  color: white;
+  box-shadow: 0 2px 10px var(--accent-glow);
+}
+
+.pd-sim__btn--start:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
+}
+
+.pd-sim__btn--stop {
+  background: var(--red-glow);
+  color: var(--red);
+  border: 1px solid var(--red-border);
+}
+
+.pd-sim__btn--stop:hover {
+  background: rgba(248, 113, 113, 0.15);
+}
+
+/* Progress */
+.pd-sim__progress {
+  height: 3px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.pd-sim__progress-fill {
+  height: 100%;
+  transition: width 0.15s linear;
+  border-radius: 0 2px 2px 0;
+  position: relative;
+}
+
+.pd-sim__progress-fill::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: -2px;
+  width: 6px;
+  height: 7px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+/* Body - Two Panel Layout */
+.pd-sim__body {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  min-height: 480px;
+}
+
+@media (max-width: 768px) {
+  .pd-sim__body {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Step List */
+.pd-sim__steps {
+  border-right: 1px solid var(--border);
+  padding: 0.5rem 0;
+  overflow-y: auto;
+  max-height: 520px;
+}
+
+.pd-sim__step {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.55rem 1rem;
+  transition: all 0.3s ease;
+  cursor: default;
+  position: relative;
+  border-left: 3px solid transparent;
+}
+
+.pd-sim__step--active {
+  background: var(--accent-glow);
+  border-left-color: var(--step-color, var(--accent));
+}
+
+.pd-sim__step--done {
+  opacity: 0.6;
+}
+
+.pd-sim__step--done .pd-sim__step-marker {
+  color: var(--green);
+}
+
+.pd-sim__step-marker {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--bg-glass-strong);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+.pd-sim__step--active .pd-sim__step-marker {
+  border-color: var(--step-color, var(--accent));
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.pd-sim__step--done .pd-sim__step-marker {
+  border-color: var(--green-border);
+  background: var(--green-glow);
+}
+
+.pd-sim__step-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-top-color: var(--step-color, var(--accent));
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+.pd-sim__step-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.pd-sim__step-title {
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pd-sim__step-sub {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  font-family: var(--mono);
+}
+
+.pd-sim__step-active-indicator {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--step-color, var(--accent));
+  box-shadow: 0 0 8px var(--step-color, var(--accent));
+  animation: pulse-dot 1s ease-in-out infinite;
+}
+
+/* Right Panel */
+.pd-sim__panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow: hidden;
+}
+
+/* Canvas */
+.pd-sim__canvas-wrap {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.pd-sim__canvas-label {
+  font-size: 0.68rem;
+  font-family: var(--mono);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.4rem;
+}
+
+.pd-sim__canvas {
+  width: 100%;
+  height: 120px;
+  border-radius: var(--radius-xs);
+}
+
+/* Terminal */
+.pd-sim__terminal {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 200px;
+}
+
+.pd-sim__terminal-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.4rem 0.75rem;
+  background: rgba(0, 0, 0, 0.4);
+  border-bottom: 1px solid var(--border);
+}
+
+.pd-sim__terminal-dots {
+  display: flex;
+  gap: 4px;
+}
+
+.pd-sim__terminal-dots span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.pd-sim__terminal-dots span:nth-child(1) { background: rgba(248, 113, 113, 0.6); }
+.pd-sim__terminal-dots span:nth-child(2) { background: rgba(234, 179, 8, 0.6); }
+.pd-sim__terminal-dots span:nth-child(3) { background: rgba(52, 211, 153, 0.6); }
+
+.pd-sim__terminal-title {
+  font-size: 0.68rem;
+  font-family: var(--mono);
+  color: var(--text-muted);
+}
+
+.pd-sim__terminal-body {
+  flex: 1;
+  padding: 0.75rem;
+  overflow-y: auto;
+  max-height: 240px;
+  background: rgba(0, 0, 0, 0.2);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.1) transparent;
+}
+
+.pd-sim__terminal-empty {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-family: var(--mono);
+  font-style: italic;
+  padding: 1rem 0;
+  text-align: center;
+}
+
+.pd-sim__log {
+  font-size: 0.72rem;
+  font-family: var(--mono);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  animation: pd-log-in 0.15s ease forwards;
+  opacity: 0;
+}
+
+@keyframes pd-log-in {
+  from { opacity: 0; transform: translateX(-4px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.pd-sim__log--log {
+  color: var(--text-secondary);
+}
+
+.pd-sim__log--header {
+  color: var(--accent-text);
+  font-weight: 600;
+  margin-top: 0.3rem;
+}
+
+.pd-sim__log--success {
+  color: var(--green);
+  font-weight: 600;
+}
+
+/* Verdict */
+.pd-sim__verdict {
+  margin: 0.75rem;
+  padding: 1.25rem;
+  border-radius: var(--radius);
+  background: var(--red-glow);
+  border: 1px solid var(--red-border);
+}
+
+.pd-sim__verdict-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.pd-sim__verdict-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--red);
+  animation: pulse-dot 1.5s ease-in-out infinite;
+}
+
+.pd-sim__verdict-label {
+  font-size: 1.1rem;
+  font-weight: 700;
+  font-family: var(--mono);
+  color: var(--red);
+  letter-spacing: 0.05em;
+}
+
+.pd-sim__verdict-badge {
+  font-size: 0.65rem;
+  font-family: var(--mono);
+  padding: 0.15rem 0.5rem;
+  border-radius: 100px;
+  background: rgba(248, 113, 113, 0.15);
+  border: 1px solid var(--red-border);
+  color: var(--red);
+  font-weight: 600;
+}
+
+.pd-sim__verdict-gauge {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.pd-sim__verdict-gauge-track {
+  flex: 1;
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.pd-sim__verdict-gauge-fill {
+  width: 87.14%;
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #f97316, #f43f5e, #ef4444);
+  animation: pd-gauge-fill 1.5s ease forwards;
+}
+
+@keyframes pd-gauge-fill {
+  from { width: 0%; }
+  to { width: 87.14%; }
+}
+
+.pd-sim__verdict-gauge-text {
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-family: var(--mono);
+  color: var(--red);
+  font-variant-numeric: tabular-nums;
+  min-width: 55px;
+}
+
+.pd-sim__verdict-reason {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  line-height: 1.65;
+  font-style: italic;
+  border-top: 1px solid var(--border);
+  padding-top: 0.75rem;
+}
+
 /* ─── PD Responsive ─── */
 @media (max-width: 640px) {
   .pd-hero__title {
@@ -2063,6 +2512,42 @@ a:hover {
   .pd-flow__detail {
     max-width: 200px;
   }
+
+  .pd-sim__body {
+    grid-template-columns: 1fr;
+  }
+
+  .pd-sim__steps {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    max-height: 200px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    padding: 0.5rem;
+    gap: 0.25rem;
+  }
+
+  .pd-sim__step {
+    padding: 0.4rem 0.5rem;
+    border-left: none;
+    border-bottom: 2px solid transparent;
+    flex-direction: column;
+    text-align: center;
+    gap: 0.3rem;
+  }
+
+  .pd-sim__step--active {
+    border-bottom-color: var(--step-color, var(--accent));
+    border-left-color: transparent;
+  }
+
+  .pd-sim__step-sub {
+    display: none;
+  }
+
+  .pd-sim__step-title {
+    font-size: 0.65rem;
+  }
 }
 
 @media (max-width: 480px) {
@@ -2077,5 +2562,15 @@ a:hover {
   .pd-cta__buttons {
     flex-direction: column;
     align-items: center;
+  }
+
+  .pd-sim__steps {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .pd-sim__header {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
   }
 }
